@@ -109,6 +109,19 @@ func handleRequest(req *http.Request) string {
 	return s[:len(s)-len("}")]
 }
 
+//Takes and array of Transaction objects and outputs an array of Payment structs
+func processTxs(txs []Transaction) []Payment {
+	var payments []Payment
+	for i := range txs {
+		payments = append(payments, Payment{
+							Currency: "ETH",
+							Address: txs[i].To,
+							Amount:	txs[i].Value,
+							Hash:	txs[i].Hash})
+	}
+	return payments
+}
+
 func main() {
 
 	params := setParams("latest", true)
@@ -132,8 +145,11 @@ func main() {
 	//	fmt.Println(result)
 	var block Block
 	json.Unmarshal([]byte(result), &block)
-	fmt.Println("ETH")
-	fmt.Println(block.Transactions[0].To)
-	fmt.Println(block.Transactions[0].Value)
-	fmt.Println(block.Transactions[0].Hash)
+	fmt.Println(block.Number)
+	payments := processTxs(block.Transactions)
+	for i := range payments {
+		fmt.Println(payments[i])
+	}
+	
+
 }
