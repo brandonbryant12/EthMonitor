@@ -50,7 +50,7 @@ type Block struct {
 
 type Transaction struct {
 	BlockHash        string  `json:"blockHash"`
-	BlockNumber      *string `json:"blockNumber"`
+	BlockNumber      string `json:"blockNumber"`
 	Gas              string  `json:"gas"`
 	GasPrice         string  `json:"gasPrice"`
 	Hash             string  `json:"hash"`
@@ -147,11 +147,11 @@ func main() {
 	req.Header.Set("Content-Type", "application/json")
 	result := handleRequest(req)
 	block := processBlock(result)
-/*
+
 	payments := processTxs(block.Transactions)
 	for i := range payments {
 		fmt.Println(payments[i])
 	}
-*/	
+	
 
 }
