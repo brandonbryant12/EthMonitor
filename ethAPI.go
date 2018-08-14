@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/streadway/amqp"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
-	//"time"
-	//"reflect"
+	"time"
 )
 
 type Payment struct {
@@ -49,19 +50,19 @@ type Block struct {
 }
 
 type Transaction struct {
-	BlockHash        string  `json:"blockHash"`
+	BlockHash        string `json:"blockHash"`
 	BlockNumber      string `json:"blockNumber"`
-	Gas              string  `json:"gas"`
-	GasPrice         string  `json:"gasPrice"`
-	Hash             string  `json:"hash"`
-	Input            string  `json:"input"`
-	Nonce            string  `json:"nonce"`
-	To               string  `json:"to"`
-	R                string  `json:"r"`
-	S                string  `json:"s"`
-	TransactionIndex string  `json:"transactionIndex"`
-	V                string  `json:"v"`
-	Value            string  `json:"value"`
+	Gas              string `json:"gas"`
+	GasPrice         string `json:"gasPrice"`
+	Hash             string `json:"hash"`
+	Input            string `json:"input"`
+	Nonce            string `json:"nonce"`
+	To               string `json:"to"`
+	R                string `json:"r"`
+	S                string `json:"s"`
+	TransactionIndex string `json:"transactionIndex"`
+	V                string `json:"v"`
+	Value            string `json:"value"`
 }
 
 func (tx *Transaction) String() string {
@@ -80,6 +81,10 @@ func (tx *Transaction) String() string {
 		tx.V,
 		tx.TransactionIndex,
 	)
+}
+
+func (payment *Payment) String() string {
+	return fmt.Sprintf("Currency: %v\nAddress: %v\nAmount: %v\nHash: %v", payment.Currency, payment.Address, payment.Amount, payment.Hash)
 }
 
 //Refactor to make this method take an array of any type and size.
@@ -102,7 +107,7 @@ func handleRequest(req *http.Request) string {
 	}
 	defer resp.Body.Close()
 	content, _ := ioutil.ReadAll(resp.Body)
-	
+
 	s := strings.SplitAfter(string(content), `"result":`)[1]
 	return s[:len(s)-len("}")]
 }
@@ -112,46 +117,97 @@ func processTxs(txs []Transaction) []Payment {
 	var payments []Payment
 	for i := range txs {
 		payments = append(payments, Payment{
-							Currency: "ETH",
-							Address: txs[i].To,
-							Amount:	txs[i].Value,
-							Hash:	txs[i].Hash})
+			Currency: "ETH",
+			Address:  txs[i].To,
+			Amount:   txs[i].Value,
+			Hash:     txs[i].Hash})
 	}
 	return payments
 }
 
 func processBlock(rawResponse string) Block {
 	var block Block
-        json.Unmarshal([]byte(rawResponse), &block)
+	json.Unmarshal([]byte(rawResponse), &block)
 	return block
+}
+
+func failOnError(err error, msg string) {
+	if err != nil {
+		log.Fatalf("%s: %s", msg, err)
+		panic(fmt.Sprintf("%s: %s", msg, err))
+	}
 }
 
 func main() {
 
-	params := setParams("latest", true)
+	//Establish RabbitMQ connection
+	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	failOnError(err, "Failed to connect to RabbitMQ")
+	defer conn.Close()
 
-	//Refactor to generate a payload given any method
-	data := Payload{Jsonrpc: "2.0", Method: "eth_getBlockByNumber", Params: params, ID: 1}
+	ch, err := conn.Channel()
+	failOnError(err, "Failed to open a channel")
+	defer ch.Close()
 
-	payloadBytes, err := json.Marshal(data)
-	if err != nil {
-		// handle err
+	q, err := ch.QueueDeclare(
+		"Ethereum", // name
+		false,      // durable
+		false,      // delete when unused
+		false,      // exclusive
+		false,      // no-wait
+		nil,        // arguments
+	)
+	failOnError(err, "Failed to declare a queue")
+	//////////////////////////////////////////////////
+
+	var latestBlockHash = ""
+	///////////INFURA Ethereum API Query/////////////
+	for {
+		//Parameters to grab the latest ETH block
+		params := setParams("latest", true)
+
+		//Refactor to generate a payload given any method
+		data := Payload{Jsonrpc: "2.0", Method: "eth_getBlockByNumber", Params: params, ID: 1}
+
+		payloadBytes, err := json.Marshal(data)
+		if err != nil {
+			// handle err
+		}
+		body := bytes.NewReader(payloadBytes)
+
+		url := "https://mainnet.infura.io/v3/924c0f97172441a28a5b5270db968474"
+		req, err := http.NewRequest("POST", url, body)
+		if err != nil {
+			// handle err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		result := handleRequest(req)
+
+		//Parse Response and send message over RabbitMQ
+		block := processBlock(result)
+		if block.Hash == latestBlockHash {
+			fmt.Println("Duplicate block")
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		latestBlockHash = block.Hash
+		payments := processTxs(block.Transactions)
+		for i := range payments {
+
+			err = ch.Publish(
+				"",     // exchange
+				q.Name, // routing key
+				false,  // mandatory
+				false,  // immediate
+				amqp.Publishing{
+					ContentType: "text/plain",
+					Body:        []byte(payments[i].String()),
+				})
+			log.Printf(" [x] Sent %s", payments[i].String())
+			failOnError(err, "Failed to publish a message")
+		}
+
+		time.Sleep(5 * time.Second)
 	}
-
-	body := bytes.NewReader(payloadBytes)
-	url := "https://mainnet.infura.io/v3/924c0f97172441a28a5b5270db968474"
-	req, err := http.NewRequest("POST", url, body)
-	if err != nil {
-		// handle err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	result := handleRequest(req)
-	block := processBlock(result)
-
-	payments := processTxs(block.Transactions)
-	for i := range payments {
-		fmt.Println(payments[i])
-	}
-	
 
 }
