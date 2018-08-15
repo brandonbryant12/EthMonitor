@@ -95,10 +95,6 @@ func setParams(blockNumber string, verbose bool) []interface{} {
 	return params
 }
 
-func startPolling() {
-
-}
-
 func handleRequest(req *http.Request) string {
 
 	resp, err := http.DefaultClient.Do(req)
@@ -158,21 +154,23 @@ func main() {
 		nil,        // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
-	//////////////////////////////////////////////////
+
+	//Prepare Infura API query
+	params := setParams("latest", true)
+	data := Payload{Jsonrpc: "2.0", Method: "eth_getBlockByNumber", Params: params, ID: 1}
+	payloadBytes, err := json.Marshal(data)
+	if err != nil {
+		// handle err
+	}
 
 	var latestBlockHash = ""
-	///////////INFURA Ethereum API Query/////////////
+
+	/*
+		 *  Query INFURA API
+		 *  Parse raw response into block->transactions->Payments->String
+	         *  Send string to RabbitMQ queue
+	*/
 	for {
-		//Parameters to grab the latest ETH block
-		params := setParams("latest", true)
-
-		//Refactor to generate a payload given any method
-		data := Payload{Jsonrpc: "2.0", Method: "eth_getBlockByNumber", Params: params, ID: 1}
-
-		payloadBytes, err := json.Marshal(data)
-		if err != nil {
-			// handle err
-		}
 		body := bytes.NewReader(payloadBytes)
 
 		url := "https://mainnet.infura.io/v3/924c0f97172441a28a5b5270db968474"
