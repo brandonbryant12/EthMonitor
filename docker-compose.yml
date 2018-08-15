@@ -1,0 +1,21 @@
+version: '3'
+services:
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+  producer:
+    build: .
+    links:
+      - "rabbitmq:rabbitmq"
+    depends_on: 
+      - rabbitmq
+    command: ./wait-for-it.sh rabbitmq:5672 -- ./ethAPI
+  consumer:
+    build: .
+    links:
+      - "rabbitmq:rabbitmq"
+    depends_on:
+      - rabbitmq
+    command: ./wait-for-it.sh rabbitmq:5672 -- ./recieve
