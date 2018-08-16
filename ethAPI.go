@@ -138,7 +138,7 @@ func failOnError(err error, msg string) {
 func main() {
 
 	//Establish RabbitMQ connection
-	conn, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
+	conn, err := amqp.Dial(os.Getenv("AMPQConn"))
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -166,9 +166,22 @@ func main() {
 	}
 
 	var latestBlockHash = ""
+<<<<<<< HEAD
 	for {
 		body := bytes.NewReader(payloadBytes)
 		url := "https://mainnet.infura.io/v3/" + os.Getenv("IFURA_API_KEY")
+=======
+
+	/*
+			 *  Query INFURA API
+			 *  Parse raw response into block->transactions->Payments->String
+		         *  Send string to RabbitMQ queue
+	*/
+	for {
+		body := bytes.NewReader(payloadBytes)
+
+		url := "https://mainnet.infura.io/v3/" + os.Getenv("INFURA_API_KEY")
+>>>>>>> 22438172c1c0b16b69ca79a02318dfef1a5dbb73
 		req, err := http.NewRequest("POST", url, body)
 		if err != nil {
 			// handle err

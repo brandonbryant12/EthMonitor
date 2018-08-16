@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
-
 	"github.com/streadway/amqp"
+	"log"
+	"os"
 )
 
 func failOnError(err error, msg string) {
@@ -13,7 +13,7 @@ func failOnError(err error, msg string) {
 }
 
 func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
+	conn, err := amqp.Dial(os.Getenv("AMPQConn"))
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
