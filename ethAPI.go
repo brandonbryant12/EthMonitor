@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -145,17 +146,18 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	q, err := ch.QueueDeclare(
-		"Ethereum", // name
-		false,      // durable
-		false,      // delete when unused
-		false,      // exclusive
-		false,      // no-wait
-		nil,        // arguments
+	err = ch.ExchangeDeclare(
+		"eth",    // name
+		"fanout", // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
 	)
-	failOnError(err, "Failed to declare a queue")
+	failOnError(err, "Failed to declare an exchange")
 
-	//Prepare Infura API query
+	//Create Infura API query
 	params := setParams("latest", true)
 	data := Payload{Jsonrpc: "2.0", Method: "eth_getBlockByNumber", Params: params, ID: 1}
 	payloadBytes, err := json.Marshal(data)
@@ -164,16 +166,9 @@ func main() {
 	}
 
 	var latestBlockHash = ""
-
-	/*
-		 *  Query INFURA API
-		 *  Parse raw response into block->transactions->Payments->String
-	         *  Send string to RabbitMQ queue
-	*/
 	for {
 		body := bytes.NewReader(payloadBytes)
-
-		url := "https://mainnet.infura.io/v3/924c0f97172441a28a5b5270db968474"
+		url := "https://mainnet.infura.io/v3/" + os.Getenv("IFURA_API_KEY")
 		req, err := http.NewRequest("POST", url, body)
 		if err != nil {
 			// handle err
@@ -189,19 +184,21 @@ func main() {
 			continue
 		}
 		latestBlockHash = block.Hash
+
 		payments := processTxs(block.Transactions)
 		for i := range payments {
 
 			err = ch.Publish(
-				"",     // exchange
-				q.Name, // routing key
-				false,  // mandatory
-				false,  // immediate
+				"eth", // exchange
+				"",    // routing key
+				false, // mandatory
+				false, // immediate
 				amqp.Publishing{
-					ContentType: "text/plain",
-					Body:        []byte(payments[i].String()),
+					DeliveryMode: amqp.Persistent,
+					ContentType:  "text/plain",
+					Body:         []byte(payments[i].String()),
 				})
-			log.Printf(" [x] Sent %s", payments[i].String())
+			//	log.Printf(" [x] Sent %s", payments[i].String())
 			failOnError(err, "Failed to publish a message")
 		}
 
