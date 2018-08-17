@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
@@ -12,12 +11,33 @@ import (
 	"os"
 	"strings"
 	"time"
+	"math"
+	"strconv"
 )
+
+func trimLeftChars(s string, n int) string {
+    m := 0
+    for i := range s {
+        if m >= n {
+            return s[i:]
+        }
+        m++
+    }
+    return s[:0]
+}
+
+
+func hexToEth(s string) float64{
+  wei := trimLeftChars(s,2)
+  eth := new(big.Int) *math.Pow10(-18)
+
+  return eth
+}
 
 type Payment struct {
 	Currency string
 	Address  string
-	Amount   []byte
+	Amount   float64
 	Hash     string
 }
 
@@ -110,14 +130,6 @@ func handleRequest(req *http.Request) string {
 	return s[:len(s)-len("}")]
 }
 
-func hexToEth(a string) []byte {
-	bs, err := hex.DecodeString(a)
-	if err != nil {
-		panic(err)
-	}
-	return bs
-
-}
 
 //Takes and array of Transaction objects and outputs an array of Payment structs
 func processTxs(txs []Transaction) []Payment {
