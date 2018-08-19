@@ -7,37 +7,43 @@ import (
 	"github.com/streadway/amqp"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-	"math"
-	"strconv"
 )
 
 func trimLeftChars(s string, n int) string {
-    m := 0
-    for i := range s {
-        if m >= n {
-            return s[i:]
-        }
-        m++
-    }
-    return s[:0]
+	m := 0
+	for i := range s {
+		if m >= n {
+			return s[i:]
+		}
+		m++
+	}
+	return s[:0]
 }
 
-
-func hexToEth(s string) float64{
-  wei := trimLeftChars(s,2)
-  eth := new(big.Int) *math.Pow10(-18)
-
-  return eth
+func hexToEth(s string) *big.Float {
+	if s == "0x0" {
+		return big.NewFloat(0)
+	}
+	weiInt := new(big.Int)
+	weiInt, ok := weiInt.SetString(s[2:], 16)
+	if !ok {
+		fmt.Println("SetString: error")
+	}
+	wei := new(big.Float).SetInt(weiInt)
+	ratio := big.NewFloat(.000000000000000001)
+	eth := new(big.Float).Mul(wei, ratio)
+	return eth
 }
 
 type Payment struct {
 	Currency string
 	Address  string
-	Amount   float64
+	Amount   *big.Float
 	Hash     string
 }
 
@@ -129,7 +135,6 @@ func handleRequest(req *http.Request) string {
 	s := strings.SplitAfter(string(content), `"result":`)[1]
 	return s[:len(s)-len("}")]
 }
-
 
 //Takes and array of Transaction objects and outputs an array of Payment structs
 func processTxs(txs []Transaction) []Payment {
