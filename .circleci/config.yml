@@ -1,18 +1,11 @@
 version: 2
 jobs:
   build:
-    docker:
-      - image: circleci/golang:1.9
-    working_directory: /go/src/github.com/brandonbryant12/EthMonitor}
+    machine: true
     steps:
       - checkout
       - run:
-    	command: |
-      	  curl -L https://github.com/docker/compose/releases/download/1.19.0/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
-      	  chmod +x ~/docker-compose
-      	  sudo mv ~/docker-compose /usr/local/bin/docker-compose
-      - setup_remote_docker
+          name: Docker build
+          command: docker-compose build
       - run:
-        - command: docker-compose build
-      - run: 
-	- command: docker-compose up
+          command: docker-compose up
