@@ -7,5 +7,8 @@ jobs:
       - run:
           name: Docker build
           command: docker-compose build
+      - run:
+          name: Unit Tests 
+          command: go test
      # - run:
      #     command: docker-compose up
