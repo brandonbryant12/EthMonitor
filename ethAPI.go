@@ -175,7 +175,7 @@ func main() {
 
 	err = ch.ExchangeDeclare(
 		"eth",    // name
-		"fanout", // type
+		"direct", // type
 		true,     // durable
 		false,    // auto-deleted
 		false,    // internal
@@ -221,10 +221,10 @@ func main() {
 				return
 			}
 			err = ch.Publish(
-				"eth", // exchange
-				"",    // routing key
-				false, // mandatory
-				false, // immediate
+				"eth",      // exchange
+				"payments", // routing key
+				false,      // mandatory
+				false,      // immediate
 				amqp.Publishing{
 					DeliveryMode: amqp.Persistent,
 					ContentType:  "text/plain",
