@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/streadway/amqp"
 	"log"
 	"os"
@@ -9,9 +10,9 @@ import (
 func failOnError(err error, msg string) {
 	if err != nil {
 		log.Fatalf("%s: %s", msg, err)
+		panic(fmt.Sprintf("%s: %s", msg, err))
 	}
 }
-
 func main() {
 	conn, err := amqp.Dial(os.Getenv("AMPQConn"))
 	failOnError(err, "Failed to connect to RabbitMQ")
