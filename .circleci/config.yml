@@ -7,5 +7,5 @@ jobs:
       - run:
           name: Docker build
           command: docker-compose build
-      - run:
-          command: docker-compose up
+     # - run:
+     #     command: docker-compose up
