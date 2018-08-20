@@ -3,19 +3,16 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.9
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/brandonbryant12/EthMonitor}
     steps:
       - checkout
       - run:
-        name: Install Docker Compose
     	command: |
       	  curl -L https://github.com/docker/compose/releases/download/1.19.0/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
       	  chmod +x ~/docker-compose
       	  sudo mv ~/docker-compose /usr/local/bin/docker-compose
       - setup_remote_docker
       - run:
-        name: Build docker
-	  command: docker-compose build
+        - command: docker-compose build
       - run: 
-        name: compose docker 
-	command: docker-compose up
+	- command: docker-compose up
