@@ -1,7 +1,7 @@
 package main
 
 import (
-	//"math/big"
+	"math/big"
 	"testing"
 )
 
@@ -19,4 +19,22 @@ func TestProcessTxs(t *testing.T) {
 	if payments[0].Currency != "ETH" {
 		t.Error("expected ETH, got: ", payments[0].Currency)
 	}
+}
+
+func TestHexToEthZeroCase(t *testing.T) {
+
+	expected := big.NewFloat(0)
+	actual := hexToEth("0x0")
+	if 0 != actual.Cmp(expected) {
+		t.Error("Expected 0, got: ", actual.String())
+	}
+}
+func TestHexToEthLargeNumCase(t *testing.T) {
+	/*	expected := big.NewFloat(0)
+		expected.Parse("3.49153413", 10)
+		actual := hexToEth("0x30746BCAD3CD7400")
+		if 0 != actual.Cmp(expected) {
+			t.Error("Expected 3.49153413, got: ", actual.String())
+		}
+	*/
 }

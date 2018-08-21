@@ -9,9 +9,9 @@ import (
 	"strings"
 )
 
-func hexToEth(s string) *big.Float {
+func hexToEth(s string) big.Float {
 	if s == "0x0" {
-		return big.NewFloat(0)
+		return *big.NewFloat(0)
 	}
 	weiInt := new(big.Int)
 	weiInt, ok := weiInt.SetString(s[2:], 16)
@@ -21,7 +21,7 @@ func hexToEth(s string) *big.Float {
 	wei := new(big.Float).SetInt(weiInt)
 	ratio := big.NewFloat(.000000000000000001)
 	eth := new(big.Float).Mul(wei, ratio)
-	return eth
+	return *eth
 }
 
 //Refactor to make this method take an array of any type and size.

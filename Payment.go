@@ -8,7 +8,7 @@ import (
 type Payment struct {
 	Currency string
 	Address  string
-	Amount   *big.Float
+	Amount   big.Float
 	Hash     string
 }
 
