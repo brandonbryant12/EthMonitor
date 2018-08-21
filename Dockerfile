@@ -1,6 +1,6 @@
 FROM golang:1.8
 
-WORKDIR /go/src/app
+WORKDIR /usr/local/go/src/app
 COPY . .
 
 RUN go get github.com/streadway/amqp
