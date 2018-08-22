@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/big"
+	"os"
 	"net/http"
 	"strings"
 )
@@ -50,4 +51,13 @@ func failOnError(err error, msg string) {
 		log.Fatalf("%s: %s", msg, err)
 		panic(fmt.Sprintf("%s: %s", msg, err))
 	}
+}
+// Exists reports whether the named file or directory exists.
+func Exists(name string) bool {
+    if _, err := os.Stat(name); err != nil {
+    if os.IsNotExist(err) {
+                return false
+            }
+    }
+    return true
 }
