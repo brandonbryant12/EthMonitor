@@ -9,6 +9,6 @@ jobs:
           command: docker-compose build
       - run:
           name: Unit Tests 
-          command: go test
+          command: docker-compose run producer go test
      # - run:
      #     command: docker-compose up

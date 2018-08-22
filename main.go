@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"net/http"
-	"log"
 	"os"
 	"time"
 )
