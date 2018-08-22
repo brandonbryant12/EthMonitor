@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"net/http"
+	"log"
 	"os"
 	"time"
 )
@@ -31,35 +32,36 @@ func main() {
 		nil,      // arguments
 	)
 	failOnError(err, "Failed to declare an exchange")
+////////////////////////////////////////////////////////////////////
 
-	//Create Infura API query
-	params := setParams("latest", true)
-	data := Payload{Jsonrpc: "2.0", Method: "eth_getBlockByNumber", Params: params, ID: 1}
-	payloadBytes, err := json.Marshal(data)
-	if err != nil {
-		// handle err
-	}
-
-	var latestBlockHash = ""
-	for {
+	for {	
+	  	
+		lastBlockNumber := readLastBlock()
+		nextBlockNumber := increamentHex(lastBlockNumber)
+		//Create Infura API query
+		params := setParams(nextBlockNumber, true)
+		data := Payload{Jsonrpc: "2.0", Method: "eth_getBlockByNumber", Params: params, ID: 1}
+		payloadBytes, err := json.Marshal(data)
+		if err != nil {
+		}
 		body := bytes.NewReader(payloadBytes)
 
 		url := "https://mainnet.infura.io/v3/" + os.Getenv("INFURA_API_KEY")
 		req, err := http.NewRequest("POST", url, body)
 		if err != nil {
-			// handle err
 		}
 		req.Header.Set("Content-Type", "application/json")
+		fmt.Println(req)
 		result := handleRequest(req)
-
+		
 		//Parse Response and send message over RabbitMQ
 		block := processBlock(result)
-		if block.Hash == latestBlockHash {
-			fmt.Println("Duplicate block")
+		if block.Number == "" {
+			fmt.Println("No new blocks")
 			time.Sleep(5 * time.Second)
 			continue
 		}
-		latestBlockHash = block.Hash
+		writeLastBlock(block.Number)
 
 		payments := processTxs(block.Transactions)
 		for i := range payments {
@@ -78,11 +80,9 @@ func main() {
 					ContentType:  "text/plain",
 					Body:         []byte(payment),
 				})
-			//	log.Printf(" [x] Sent %s", payments[i].String())
+//			log.Printf(" [x] Sent %s", payments[i].String())
 			failOnError(err, "Failed to publish a message")
 		}
-
-		time.Sleep(5 * time.Second)
 	}
 
 }
