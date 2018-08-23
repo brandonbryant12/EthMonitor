@@ -6,7 +6,7 @@ jobs:
       - checkout
       - run:
           name: Docker build
-          command: docker-compose build .
+          command: docker-compose build 
       - run:
           name: Unit Tests 
           command: docker-compose run producer go test
