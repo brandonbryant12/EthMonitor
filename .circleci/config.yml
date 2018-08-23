@@ -6,15 +6,15 @@ jobs:
       - checkout
       - run:
           name: Docker build
-          command: docker-compose build -t ethmonitor .
+          command: docker-compose build .
       - run:
           name: Unit Tests 
           command: docker-compose run producer go test
       - run: 
           name: Push Docker image to repo
           command: |
-            docker tag ethmonitor:latest ${DOCKER_REPO}/ethmonitor:latest 
-            docker push ${DOCKER_REPO}/ethmonitor:latest
-            docker tag ethmonitor:latest ${DOCKER_REPO}/ethmonitor:${CIRCLE_SHA1}
+            docker tag producer:latest ${DOCKER_REPO}/producer:latest 
+            docker push ${DOCKER_REPO}/producer:latest
+            docker tag producer:latest ${DOCKER_REPO}/producer:${CIRCLE_SHA1}
             docker push ${DOCKER_REPO}/ethmonitor:${CIRCLE_SHA1}
 
