@@ -12,7 +12,7 @@ jobs:
           command: docker-compose run producer go test
       - run:
           name: Login to Docker Hub
-          command: docker login $DOCKER_USER -p $DOCKER_PASS 
+          command: echo $DOCKER_USER 
       - run:
           name: Push image
           command: docker push brandonbryant/ethmonitor:v1 
