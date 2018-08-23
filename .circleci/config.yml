@@ -13,8 +13,8 @@ jobs:
       - run: 
           name: Push Docker image to repo
           command: |
-            docker tag ethmonitor_producer:latest ${DOCKER_REPO}/ethmonitor_producer:latest 
-            docker push ${DOCKER_REPO}/ethmonitor_producer:latest
-            docker tag ethmonitor_producer:latest ${DOCKER_REPO}/ethmonitor_producer:${CIRCLE_SHA1}
-            docker push ${DOCKER_REPO}/ethmonito_producer:${CIRCLE_SHA1}
+            docker tag project_producer:latest ${DOCKER_REPO}/project_producer:latest 
+            docker push ${DOCKER_REPO}/project_producer:latest
+            docker tag project_producer:latest ${DOCKER_REPO}/project_producer:${CIRCLE_SHA1}
+            docker push ${DOCKER_REPO}/project_producer:${CIRCLE_SHA1}
 
