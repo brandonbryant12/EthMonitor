@@ -6,13 +6,15 @@ jobs:
       - checkout
       - run:
           name: Docker build
-          command: docker-compose build -t=brandonbryant/EthMonitor:v1 .
+          command: docker-compose build -t ethmonitor .
       - run:
           name: Unit Tests 
           command: docker-compose run producer go test
-      - run:
-          name: Login to Docker Hub
-          command: echo $DOCKER_USER 
-      - run:
-          name: Push image
-          command: docker push brandonbryant/ethmonitor:v1 
+      - run: 
+          name: Push Docker image to repo
+          command: |
+            docker tag ethmonitor:latest ${DOCKER_REPO}/ethmonitor:latest 
+            docker push ${DOCKER_REPO}/ethmonitor:latest
+            docker tag ethmonitor:latest ${DOCKER_REPO}/ethmonitor:${CIRCLE_SHA1}
+            docker push ${DOCKER_REPO}/ethmonitor:${CIRCLE_SHA1}
+
