@@ -13,13 +13,13 @@ services:
       - "rabbitmq:rabbitmq"
     depends_on: 
       - rabbitmq
-    command: ./wait-for-it.sh rabbitmq:5672 -- ./main 
-  consumer:
-    build: .
-    env_file:
-      - .env
-    links:
-      - "rabbitmq:rabbitmq"
+    command: ./wait-for-it.sh rabbitmq:5672 -- ./main -- ./recieve
+  #consumer:
+   # build: .
+   # env_file:
+   #   - .env
+   # links:
+    #  - "rabbitmq:rabbitmq"
    # depends_on:
    #   - rabbitmq
    # command: ./wait-for-it.sh rabbitmq:5672 -- ./recieve

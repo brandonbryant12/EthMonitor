@@ -31,10 +31,10 @@ func main() {
 		nil,      // arguments
 	)
 	failOnError(err, "Failed to declare an exchange")
-////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////
 
-	for {	
-	  	
+	for {
+
 		lastBlockNumber := readLastBlock()
 		nextBlockNumber := increamentHex(lastBlockNumber)
 		//Create Infura API query
@@ -50,13 +50,13 @@ func main() {
 		if err != nil {
 		}
 		req.Header.Set("Content-Type", "application/json")
-		fmt.Println(req)
+		//		fmt.Println(req)
 		result := handleRequest(req)
-		
+
 		//Parse Response and send message over RabbitMQ
 		block := processBlock(result)
 		if block.Number == "" {
-			fmt.Println("No new blocks")
+			fmt.Println(fmt.Sprintf("Last block seen %v", lastBlockNumber))
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -79,7 +79,7 @@ func main() {
 					ContentType:  "text/plain",
 					Body:         []byte(payment),
 				})
-//			log.Printf(" [x] Sent %s", payments[i].String())
+			//			log.Printf(" [x] Sent %s", payments[i].String())
 			failOnError(err, "Failed to publish a message")
 		}
 	}

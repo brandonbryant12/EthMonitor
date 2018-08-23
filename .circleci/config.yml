@@ -6,9 +6,12 @@ jobs:
       - checkout
       - run:
           name: Docker build
-          command: docker-compose build
+          command: docker-compose build -t=brandonbryant/EthMonitor:v1 .
       - run:
           name: Unit Tests 
           command: docker-compose run producer go test
-     # - run:
-     #     command: docker-compose up
+      - run:
+	  name: Push Docker Image
+          command: |
+	     docker login login $DOCKER_USER -p $DOCKER_PASS 
+             docker push brandonbryant/ethmonitor:v1 
