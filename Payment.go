@@ -13,5 +13,5 @@ type Payment struct {
 }
 
 func (payment *Payment) String() string {
-	return fmt.Sprintf("Currency: %v\nAddress: %v\nAmount: %v\nHash: %v", payment.Currency, payment.Address, payment.Amount, payment.Hash)
+	return fmt.Sprintf("currency: %v\naddress: %v\namount: %v\nhash: %v", payment.Currency, payment.Address, payment.Amount.String(), payment.Hash)
 }

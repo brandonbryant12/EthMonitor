@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -79,7 +80,7 @@ func main() {
 					ContentType:  "text/plain",
 					Body:         []byte(payment),
 				})
-			//			log.Printf(" [x] Sent %s", payments[i].String())
+			log.Printf(" [x] Sent %s", payments[i].String())
 			failOnError(err, "Failed to publish a message")
 		}
 	}
