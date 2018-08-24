@@ -12,15 +12,16 @@ import (
 )
 
 func main() {
-
 	//Establish RabbitMQ connection
 	conn, err := amqp.Dial(os.Getenv("AMPQConn"))
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
+	log.Printf("Opened amqp connection")
 
 	ch, err := conn.Channel()
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
+	log.Printf("opened channel")
 
 	err = ch.ExchangeDeclare(
 		"eth",    // name
@@ -32,8 +33,9 @@ func main() {
 		nil,      // arguments
 	)
 	failOnError(err, "Failed to declare an exchange")
+	log.Printf("Exchanged declared\nname:eth\ntype:direct\ndurable:true\nauto-deleted:false\ninternal:false\nno-wait:false\nargs:nil")
 	////////////////////////////////////////////////////////////////////
-
+	
 	for {
 
 		lastBlockNumber := readLastBlock()
@@ -52,17 +54,18 @@ func main() {
 		}
 		req.Header.Set("Content-Type", "application/json")
 		//		fmt.Println(req)
+		log.Printf("Requesting Block Number: " + nextBlockNumber)
 		result := handleRequest(req)
-
 		//Parse Response and send message over RabbitMQ
 		block := processBlock(result)
 		if block.Number == "" {
 			fmt.Println(fmt.Sprintf("Last block seen %v", lastBlockNumber))
+			log.Printf("Block Number: " + nextBlockNumber + " was not found by Infura Query... will sleep for 5 seconds and try again")
 			time.Sleep(5 * time.Second)
 			continue
 		}
 		writeLastBlock(block.Number)
-
+		log.Printf("Block Number: " + block.Number + " was found")
 		payments := processTxs(block.Transactions)
 		for i := range payments {
 			payment, err := json.Marshal(payments[i])
