@@ -7,19 +7,14 @@ services:
       - "15672:15672"
   producer:
     build: .
+    volumes: 
+      - data:/data
     env_file:
       - .env
     links:
       - "rabbitmq:rabbitmq"
     depends_on: 
       - rabbitmq
-    command: ./wait-for-it.sh rabbitmq:5672 -- ./main -- ./recieve
-  #consumer:
-   # build: .
-   # env_file:
-   #   - .env
-   # links:
-    #  - "rabbitmq:rabbitmq"
-   # depends_on:
-   #   - rabbitmq
-   # command: ./wait-for-it.sh rabbitmq:5672 -- ./recieve
+    command: ./wait-for-it.sh rabbitmq:5672 -- ./main
+volumes:
+  data:

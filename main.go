@@ -11,17 +11,22 @@ import (
 	"time"
 )
 
+var (
+	outfile, _ = os.Create("/data/ethLogs.log") // update path for your needs
+	l          = log.New(outfile, "", 0)
+)
+
 func main() {
 	//Establish RabbitMQ connection
 	conn, err := amqp.Dial(os.Getenv("AMPQConn"))
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
-	log.Printf("Opened amqp connection")
+	l.Printf("Opened amqp connection")
 
 	ch, err := conn.Channel()
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
-	log.Printf("opened channel")
+	l.Printf("opened channel")
 
 	err = ch.ExchangeDeclare(
 		"eth",    // name
@@ -33,13 +38,15 @@ func main() {
 		nil,      // arguments
 	)
 	failOnError(err, "Failed to declare an exchange")
-	log.Printf("Exchanged declared\nname:eth\ntype:direct\ndurable:true\nauto-deleted:false\ninternal:false\nno-wait:false\nargs:nil")
+	l.Printf("Exchanged declared\nname:eth\ntype:direct\ndurable:true\nauto-deleted:false\ninternal:false\nno-wait:false\nargs:nil")
 	////////////////////////////////////////////////////////////////////
-	
+
 	for {
 
 		lastBlockNumber := readLastBlock()
+		//fmt.Println(lastBlockNumber)
 		nextBlockNumber := increamentHex(lastBlockNumber)
+
 		//Create Infura API query
 		params := setParams(nextBlockNumber, true)
 		data := Payload{Jsonrpc: "2.0", Method: "eth_getBlockByNumber", Params: params, ID: 1}
@@ -54,18 +61,18 @@ func main() {
 		}
 		req.Header.Set("Content-Type", "application/json")
 		//		fmt.Println(req)
-		log.Printf("Requesting Block Number: " + nextBlockNumber)
+		l.Printf("Requesting Block Number: " + nextBlockNumber)
 		result := handleRequest(req)
 		//Parse Response and send message over RabbitMQ
 		block := processBlock(result)
 		if block.Number == "" {
 			fmt.Println(fmt.Sprintf("Last block seen %v", lastBlockNumber))
-			log.Printf("Block Number: " + nextBlockNumber + " was not found by Infura Query... will sleep for 5 seconds and try again")
+			l.Printf("Block Number: " + nextBlockNumber + " was not found by Infura Query... will sleep for 5 seconds and try again")
 			time.Sleep(5 * time.Second)
 			continue
 		}
 		writeLastBlock(block.Number)
-		log.Printf("Block Number: " + block.Number + " was found")
+		l.Printf("Block Number: " + block.Number + " was found")
 		payments := processTxs(block.Transactions)
 		for i := range payments {
 			payment, err := json.Marshal(payments[i])
@@ -83,7 +90,7 @@ func main() {
 					ContentType:  "text/plain",
 					Body:         []byte(payment),
 				})
-			log.Printf(" [x] Sent %s", payments[i].String())
+			l.Printf(" [x] Sent %s", payments[i].String())
 			failOnError(err, "Failed to publish a message")
 		}
 	}
