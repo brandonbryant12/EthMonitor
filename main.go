@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 func main() {
 	//Establish RabbitMQ connection
 	conn, err := amqp.Dial(os.Getenv("AMPQConn"))
@@ -34,8 +33,6 @@ func main() {
 	)
 	failOnError(err, "Failed to declare an exchange")
 	fmt.Printf("Exchanged declared\nname:eth\ntype:direct\ndurable:true\nauto-deleted:false\ninternal:false\nno-wait:false\nargs:nil")
-	////////////////////////////////////////////////////////////////////
-
 	for {
 
 		lastBlockNumber := readLastBlock()
@@ -55,7 +52,6 @@ func main() {
 		if err != nil {
 		}
 		req.Header.Set("Content-Type", "application/json")
-		//fmt.Println(req)
 		fmt.Printf("Requesting Block Number: " + nextBlockNumber)
 		result := handleRequest(req)
 		//Parse Response and send message over RabbitMQ
