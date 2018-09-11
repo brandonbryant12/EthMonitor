@@ -5,28 +5,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
-	"log"
 	"net/http"
 	"os"
 	"time"
 )
 
-var (
-	outfile, _ = os.Create("/data/ethLogs.log") // update path for your needs
-	l          = log.New(outfile, "", 0)
-)
 
 func main() {
 	//Establish RabbitMQ connection
 	conn, err := amqp.Dial(os.Getenv("AMPQConn"))
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
-	l.Printf("Opened amqp connection")
+	fmt.Printf("Opened amqp connection")
 
 	ch, err := conn.Channel()
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
-	l.Printf("opened channel")
+	fmt.Printf("opened channel")
 
 	err = ch.ExchangeDeclare(
 		"eth",    // name
@@ -38,7 +33,7 @@ func main() {
 		nil,      // arguments
 	)
 	failOnError(err, "Failed to declare an exchange")
-	l.Printf("Exchanged declared\nname:eth\ntype:direct\ndurable:true\nauto-deleted:false\ninternal:false\nno-wait:false\nargs:nil")
+	fmt.Printf("Exchanged declared\nname:eth\ntype:direct\ndurable:true\nauto-deleted:false\ninternal:false\nno-wait:false\nargs:nil")
 	////////////////////////////////////////////////////////////////////
 
 	for {
@@ -60,19 +55,19 @@ func main() {
 		if err != nil {
 		}
 		req.Header.Set("Content-Type", "application/json")
-		//		fmt.Println(req)
-		l.Printf("Requesting Block Number: " + nextBlockNumber)
+		//fmt.Println(req)
+		fmt.Printf("Requesting Block Number: " + nextBlockNumber)
 		result := handleRequest(req)
 		//Parse Response and send message over RabbitMQ
 		block := processBlock(result)
 		if block.Number == "" {
 			fmt.Println(fmt.Sprintf("Last block seen %v", lastBlockNumber))
-			l.Printf("Block Number: " + nextBlockNumber + " was not found by Infura Query... will sleep for 5 seconds and try again")
+			fmt.Printf("Block Number: " + nextBlockNumber + " was not found by Infura Query... will sleep for 5 seconds and try again")
 			time.Sleep(5 * time.Second)
 			continue
 		}
 		writeLastBlock(block.Number)
-		l.Printf("Block Number: " + block.Number + " was found")
+		fmt.Printf("Block Number: " + block.Number + " was found")
 		payments := processTxs(block.Transactions)
 		for i := range payments {
 			payment, err := json.Marshal(payments[i])
@@ -90,7 +85,7 @@ func main() {
 					ContentType:  "text/plain",
 					Body:         []byte(payment),
 				})
-			l.Printf(" [x] Sent %s", payments[i].String())
+			fmt.Println(" [x] Sent ", payments[i].String())
 			failOnError(err, "Failed to publish a message")
 		}
 	}
